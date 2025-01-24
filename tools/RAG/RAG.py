@@ -4,6 +4,7 @@ from langchain_core.tools import Tool
 from rich import print as rprint
 from typing import Union
 
+@Tool
 def RAG(filepath: str, query: str) -> Union[str, None]:
   '''
   Retrieves context from the vector database based on the given query
@@ -11,7 +12,7 @@ def RAG(filepath: str, query: str) -> Union[str, None]:
     filepath: str - the filepath of the document to query about
     query : str - the query from the user
   Output:
-    context : str - the retrieved context from the vector database
+    context : str | None - the retrieved context from the vector database or else return None
   '''
   filepath = filepath.replace("\\", "/")
 
