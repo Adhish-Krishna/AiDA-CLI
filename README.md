@@ -1,7 +1,7 @@
 # AiDA-CLI: AI Document Assistant
 
 <div style="display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 20px;">
-  <img src="Design/logo.png" alt="AiDA-CLI Logo" width="100"/>
+  <img src="./Design/Logo.png" alt="AiDA-CLI Logo" width="100"/>
   <h1 style="font-family: 'Poppins', sans-serif;">AiDA - CLI</h1>
 </div>
 
