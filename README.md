@@ -19,6 +19,9 @@ AiDA-CLI is a powerful command-line interface tool that enables users to interac
 - **RAG Implementation**: Utilizes Retrieval Augmented Generation for accurate responses
 - **Groq Integration**: Powered by Groq's LLM capabilities
 
+## Demo
+[Watch Demo](https://drive.google.com/file/d/187NGwRyUe1kw6DRC3sTpC4rvIFU9IKYr/view?usp=sharing)
+
 ## Installation
 
 1. Clone the repository:
