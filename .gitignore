@@ -3,3 +3,6 @@
 /utils/__pycache__
 /.env
 /tools/RAG/db
+/aida_chat_history.db
+/apikeys.txt
+/bin

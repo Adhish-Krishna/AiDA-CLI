@@ -1,10 +1,8 @@
 from tools.RAG.Chunking import ChunkDocument
 from tools.RAG.Retrieve import RetrieveChunks
-from langchain_core.tools import Tool
 from rich import print as rprint
 from typing import Union
 
-@Tool
 def RAG(filepath: str, query: str) -> Union[str, None]:
   '''
   Retrieves context from the vector database based on the given query

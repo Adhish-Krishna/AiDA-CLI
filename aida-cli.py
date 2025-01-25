@@ -1,45 +1,175 @@
-'''
-  AiDA-CLI : AI Document Assistant - Command Line Interface
-  - It is a command line based agent which helps the user to chat with their documents no matter how complex the document is whether it is a pdf, pptx, docx, txt or markdown files, AiDA can handle them.
-  - As of now AiDA, in its core uses Groq as its LLM provider. The user needs to provide the Groq API key in a .env file. See README.md for further instructions.
-  - AiDA lets the users to choose between the multiple models provided by Groq
-
-  What AiDA is capable of?
-    - AiDA is an AI Agent that lets users to upload their document (pdf, pptx, docx, txt or markdown files) and ask questions about them.
-    - AiDA is also capable of searching the web for the answers for the user's query
-    - For complex user query AiDA can write python code and execute it and answer to the user's query (For example when the user asks to visualize some data, AiDA can to do that)
-    - It can save content to the file system when the user asks about it. (For example when the user uploads a book or a pdf and asks AiDA to create a learning material, it reads through the pdf and creates a learning material and saves it in the file system and the user can use it to learn)
-
-'''
-
-# Importing necessary modules and libraries
-
-from langchain_groq import ChatGroq
-from langchain.prompts import ChatPromptTemplate
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+import os
+import re
 from dotenv import load_dotenv
-from rich.console import Console
+from rich import print as rprint
+from rich.prompt import Prompt
 from rich.markdown import Markdown
 from rich.live import Live
+from rich.console import Console
+from langchain_groq import ChatGroq
+from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.messages import SystemMessage, AIMessageChunk
+from langchain_core.tools import StructuredTool
+from langchain_community.chat_message_histories import SQLChatMessageHistory
+from pydantic import BaseModel, Field
+from typing import Dict, Optional, Tuple, Any
 
-# Load the Groq API Key from the .env file
+# Import your existing RAG function
+from tools.RAG.RAG import RAG
+
 load_dotenv()
-
-#Initializing the model
-model = ChatGroq(model="llama-3.3-70b-versatile")
-
-#Initializing the Console from rich
+model_name = os.getenv('MODEL_NAME')
 console = Console()
 
-#Streams the response from the llm in markdown to the console
-def display_streaming_markdown(prompt: str) -> None:
-    markdown_output = ""
+class DocumentQueryInput(BaseModel):
+    filepath: str = Field(..., description="Full path to the document file")
+    query: str = Field(..., description="Specific question or task for the document")
 
-    with Live(Markdown(markdown_output), console=console, refresh_per_second=10) as live:
-        for chunk in model.stream(prompt):
-            markdown_output += chunk.content
-            live.update(Markdown(markdown_output))
+class AIDAAgent:
+    def __init__(self):
+        self.llm = ChatGroq(
+            model_name=model_name,
+            temperature=0.3,
+            streaming=True
+        )
 
-# Example usage
-prompt = "generate point wise content of deep learning in about 300 words"
-display_streaming_markdown(prompt)
+        self.tools = [
+            StructuredTool.from_function(
+                func=self._rag_wrapper,
+                name="DocumentRetrieval",
+                description="""ONLY use for questions about SPECIFIC DOCUMENTS.
+                Requires both filepath and query. File must exist locally.
+                Input format: {{"filepath": "path/to/file", "query": "your question"}}""",
+                args_schema=DocumentQueryInput
+            )
+        ]
+
+        self.prompt = ChatPromptTemplate.from_messages([
+            SystemMessage(content="""You are AiDA - Artificial Intelligence Document Assistant. Follow these rules:
+
+1. Document Questions:
+- Use DocumentRetrieval ONLY when user provides BOTH:
+  a) Explicit file path (e.g., .pdf, .docx)
+  b) Specific document-related question
+- Never assume document paths - require explicit user input
+
+2. General Knowledge:
+- Use built-in knowledge for common questions
+- Acknowledge when unsure
+
+3. Response Guidelines:
+- For documents: cite exact text excerpts
+- For general questions: keep answers concise
+- Always verify document existence before use"""),
+            MessagesPlaceholder(variable_name="chat_history"),
+            ("human", "{input}"),
+            MessagesPlaceholder(variable_name="agent_scratchpad")
+        ])
+
+        self.agent = create_tool_calling_agent(self.llm, self.tools, self.prompt)
+        self.agent_executor = AgentExecutor(
+            agent=self.agent,
+            tools=self.tools,
+            verbose=False,
+            max_iterations=3,
+            handle_parsing_errors=True
+        )
+
+        self.chat_history = SQLChatMessageHistory(
+            session_id="aida_session",
+            connection="sqlite:///aida_chat_history.db"
+        )
+
+    def _detect_document_query(self, input_text: str) -> Optional[Tuple[str, str]]:
+        quoted_path_match = re.search(r'"([^"]+\.(pdf|docx|pptx|txt|md))"', input_text)
+        if quoted_path_match:
+            filepath = quoted_path_match.group(1)
+            query = input_text.replace(quoted_path_match.group(0), "").strip()
+            return (filepath, query)
+
+        path_match = re.search(r'(\S+\.(pdf|docx|pptx|txt|md))\s+(.+)', input_text)
+        if path_match:
+            return (path_match.group(1), path_match.group(3))
+
+        return None
+
+    def _rag_wrapper(self, filepath: str, query: str) -> str:
+        try:
+            if not os.path.exists(filepath):
+                return f"Error: File {filepath} not found"
+            context = RAG(filepath, query)
+            return context if context else "No relevant content found in document"
+        except Exception as e:
+            return f"Document processing error: {str(e)}"
+
+    def _process_input(self, user_input: str) -> Dict:
+        doc_info = self._detect_document_query(user_input)
+        if doc_info:
+            filepath, query = doc_info
+            return {
+                "input": f"Document query: {query}",
+                "tool_input": {"filepath": filepath, "query": query}
+            }
+        return {"input": user_input}
+
+    def _process_stream_chunk(self, chunk: Any) -> str:
+        """Extract content from different chunk types"""
+        if isinstance(chunk, AIMessageChunk):
+            return chunk.content
+        if isinstance(chunk, dict):
+            return chunk.get("output", "")
+        return ""
+
+    def chat(self):
+        rprint("[bold green]AiDA - CLI : AI Document Assistant[/bold green]")
+        rprint("[italic]Type 'exit' to end the conversation[/italic]\n")
+
+        while True:
+            try:
+                user_input = Prompt.ask("[bold yellow]User[/bold yellow] ").strip()
+                if user_input.lower() in ['exit', 'quit']:
+                    self.chat_history.clear()
+                    break
+
+                processed = self._process_input(user_input)
+                self.chat_history.add_user_message(user_input)
+
+                full_response = []
+                markdown_content = ""
+                final_output = ""
+                rprint("[bold green]AiDA:[/bold green]")
+                with Live(Markdown(markdown_content), auto_refresh=False, console=console) as live:
+                    for chunk in self.agent_executor.stream({
+                        "input": processed["input"],
+                        "chat_history": self.chat_history.messages
+                    }):
+                        chunk_content = self._process_stream_chunk(chunk)
+
+                        if chunk_content:
+                            full_response.append(chunk_content)
+                            markdown_content += chunk_content
+                            live.update(Markdown(markdown_content), refresh=True)
+
+                        # Capture final output if available
+                        if isinstance(chunk, dict) and "output" in chunk:
+                            final_output = chunk["output"]
+
+                # Add final output to history if we didn't capture incremental updates
+                if final_output and not full_response:
+                    self.chat_history.add_ai_message(final_output)
+                    rprint(f"[bold cyan]AiDA:[/bold cyan] {Markdown(final_output)}\n")
+                else:
+                    self.chat_history.add_ai_message("".join(full_response))
+
+                console.print("\n")
+
+            except KeyboardInterrupt:
+                self.chat_history.clear()
+                break
+            except Exception as e:
+                rprint(f"[red]Error: {str(e)}[/red]")
+
+if __name__ == '__main__':
+    agent = AIDAAgent()
+    agent.chat()
