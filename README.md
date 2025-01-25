@@ -1,4 +1,4 @@
-# AiDA-CLI: AI Document Assistant
+# <center>AiDA-CLI: AI Document Assistant</center>
 
 <div style="display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 20px;">
   <img src="./Design/Logo.png" alt="AiDA-CLI Logo" width="100"/>
@@ -9,15 +9,18 @@
 
 AiDA-CLI is a powerful command-line interface tool that enables users to interact with and query documents intelligently. It serves as an AI-powered document assistant capable of handling various document formats including PDF, PPTX, DOCX, TXT, and Markdown files.
 
-## Features
+## Available Features
 
 - **Multi-format Support**: Process and analyze PDF, PPTX, DOCX, TXT, and Markdown files
 - **Intelligent Querying**: Ask questions about your documents and get relevant answers
+- **RAG Implementation**: Utilizes Retrieval Augmented Generation for accurate responses
+- **Groq Integration**: Powered by Groq's LLM capabilities
+
+## Upcoming Features
+
 - **Web Search Integration**: Search the web to supplement document-based answers
 - **Code Execution**: Generate and run Python code for data visualization and analysis
 - **Content Generation**: Create and save learning materials based on document content
-- **RAG Implementation**: Utilizes Retrieval Augmented Generation for accurate responses
-- **Groq Integration**: Powered by Groq's LLM capabilities
 
 ## Demo
 [Watch Demo](https://drive.google.com/file/d/187NGwRyUe1kw6DRC3sTpC4rvIFU9IKYr/view?usp=sharing)
@@ -46,6 +49,7 @@ pip install -r requirements.txt
 - Add your Groq API key to the `.env` file:
 ```
 GROQ_API_KEY = your_api_key_here
+MODEL_NAME = <tool calling supported models from groq>
 ```
 
 ## Usage
