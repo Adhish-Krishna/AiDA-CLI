@@ -23,7 +23,6 @@ from tools.RAG.RAG import RAG
 
 load_dotenv()
 groq_model_name = os.getenv('GROQ_MODEL_NAME')
-ollama_model_name = os.getenv('OLLAMA_MODEL_NAME')
 default_provider = os.getenv('DEFAULT_PROVIDER')
 console = Console()
 
@@ -39,7 +38,7 @@ class AIDAAgent:
             model=groq_model_name,
             temperature=0.3
         )
-
+        #Add Tools here
         self.tools = [
             StructuredTool.from_function(
                 func=self._rag_wrapper,

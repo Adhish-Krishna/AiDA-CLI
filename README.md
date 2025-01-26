@@ -49,7 +49,7 @@ pip install -r requirements.txt
 - Add your Groq API key to the `.env` file:
 ```
 GROQ_API_KEY = your_api_key_here
-MODEL_NAME = <tool calling supported models from groq>
+MODEL_NAME = <tool calling supported models from groq (for now llama 3.3 70 verstaile only supports with AiDA)>
 ```
 
 ## Usage
