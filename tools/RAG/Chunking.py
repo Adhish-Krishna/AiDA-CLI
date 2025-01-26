@@ -1,7 +1,7 @@
 from langchain_docling.loader import ExportType
 from langchain_docling import DoclingLoader
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from langchain_community.vectorstores.utils import filter_complex_metadata
 from datetime import datetime
 from utils.util import sanitize_collection_name, extract_filename, extract_extension
@@ -58,13 +58,13 @@ class ChunkDocument:
   def initializeEmbeddings(self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2")->None:
     try:
       if self.isExist == False:
-        console.print("Initializing Embeddings", style="blue")
+        console.print("Initializing Embeddings", style="green")
         st = datetime.now()
         self.embeddings = HuggingFaceEmbeddings(model_name=model_name)
         et = datetime.now()
         run_time = et - st
-        console.print("Initialized Embeddings", style="blue")
-        console.print(f"Time Taken: {str(run_time)}", style="blue")
+        console.print("Initialized Embeddings", style="green")
+        console.print(f"Time Taken: {str(run_time)}", style="green")
     except Exception as e:
       console.print(f"Error initializing embeddings: {str(e)}", style="red")
       raise
@@ -72,7 +72,7 @@ class ChunkDocument:
   def storeEmbeddings(self)->None:
     try:
       if self.isExist == False:
-        console.print("Creating Vector DB", style="blue")
+        console.print("Creating Vector DB", style="yellow")
         st = datetime.now()
         vector_store = Chroma(
           collection_name=self.collection_name,
@@ -82,8 +82,8 @@ class ChunkDocument:
         vector_store.add_documents(filter_complex_metadata(self.docs))
         et = datetime.now()
         run_time = et - st
-        console.print("Finished Creating Vector DB", style="blue")
-        console.print(f"Time Taken: {str(run_time)}", style="blue")
+        console.print("Finished Creating Vector DB", style="yellow")
+        console.print(f"Time Taken: {str(run_time)}", style="yellow")
     except Exception as e:
       console.print(f"Error storing embeddings: {str(e)}", style="red")
       raise

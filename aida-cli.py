@@ -1,37 +1,43 @@
 import os
 import re
+import sqlite3
+from datetime import datetime
 from dotenv import load_dotenv
 from rich import print as rprint
-from rich.prompt import Prompt
+from rich.prompt import Prompt, IntPrompt
 from rich.markdown import Markdown
 from rich.live import Live
 from rich.console import Console
 from langchain_groq import ChatGroq
+from langchain_ollama import ChatOllama
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.messages import SystemMessage, AIMessageChunk
+from langchain_core.messages import SystemMessage, AIMessageChunk, HumanMessage, AIMessage
 from langchain_core.tools import StructuredTool
 from langchain_community.chat_message_histories import SQLChatMessageHistory
 from pydantic import BaseModel, Field
-from typing import Dict, Optional, Tuple, Any
+from typing import Dict, Optional, Tuple, Any, List
 
 # Import your existing RAG function
 from tools.RAG.RAG import RAG
 
 load_dotenv()
-model_name = os.getenv('MODEL_NAME')
+groq_model_name = os.getenv('GROQ_MODEL_NAME')
+ollama_model_name = os.getenv('OLLAMA_MODEL_NAME')
+default_provider = os.getenv('DEFAULT_PROVIDER')
 console = Console()
 
 class DocumentQueryInput(BaseModel):
     filepath: str = Field(..., description="Full path to the document file")
     query: str = Field(..., description="Specific question or task for the document")
 
+
+
 class AIDAAgent:
     def __init__(self):
         self.llm = ChatGroq(
-            model_name=model_name,
-            temperature=0.3,
-            streaming=True
+            model=groq_model_name,
+            temperature=0.3
         )
 
         self.tools = [
@@ -81,6 +87,9 @@ class AIDAAgent:
             connection="sqlite:///aida_chat_history.db"
         )
 
+        # Create chats directory if not exists
+        os.makedirs("chats", exist_ok=True)
+
     def _detect_document_query(self, input_text: str) -> Optional[Tuple[str, str]]:
         quoted_path_match = re.search(r'"([^"]+\.(pdf|docx|pptx|txt|md))"', input_text)
         if quoted_path_match:
@@ -121,17 +130,81 @@ class AIDAAgent:
             return chunk.get("output", "")
         return ""
 
+    def _save_chat_session(self):
+        """Save current chat session to separate database"""
+        name = Prompt.ask("[bold green]Enter the name of the chat to save[/bold green]").strip()
+        filename = f"chats/chat_{name}.db"
+
+        # Create new database
+        saved_chat = SQLChatMessageHistory(
+            session_id="saved_session",
+            connection=f"sqlite:///{filename}"
+        )
+
+        # Copy messages
+        for message in self.chat_history.messages:
+            if isinstance(message, HumanMessage):
+                saved_chat.add_user_message(message.content)
+            elif isinstance(message, AIMessage):
+                saved_chat.add_ai_message(message.content)
+
+        rprint(f"[green]Chat saved to {filename}[/green]")
+
+    def _load_chat_session(self):
+        """Load chat session from saved database"""
+        chat_files = [f for f in os.listdir("chats") if f.endswith(".db")]
+        if not chat_files:
+            rprint("[red]No saved chats found[/red]")
+            return
+
+        rprint("[bold]Available chats:[/bold]")
+        for idx, file in enumerate(chat_files, 1):
+            rprint(f"{idx}. {file}")
+
+        try:
+            selection = IntPrompt.ask("Enter chat number to load", default=1, show_default=False)
+            selected_file = chat_files[selection - 1]
+        except (ValueError, IndexError):
+            rprint("[red]Invalid selection[/red]")
+            return
+
+        # Load selected chat
+        filepath = os.path.join("chats", selected_file)
+        loaded_chat = SQLChatMessageHistory(
+            session_id="saved_session",
+            connection=f"sqlite:///{filepath}"
+        )
+
+        # Clear current history and load messages
+        self.chat_history.clear()
+        for message in loaded_chat.messages:
+            if isinstance(message, HumanMessage):
+                self.chat_history.add_user_message(message.content)
+            elif isinstance(message, AIMessage):
+                self.chat_history.add_ai_message(message.content)
+
+        rprint(f"[green]Loaded chat from {selected_file}[/green]")
+
     def chat(self):
         rprint("[bold green]AiDA - CLI : AI Document Assistant[/bold green]")
-        rprint("[italic]Type 'exit' to end the conversation[/italic]\n")
+        rprint("[italic]Type 'exit' to end conversation, '/save' to save, '/load' to load[/italic]\n")
 
         while True:
             try:
                 user_input = Prompt.ask("[bold yellow]User[/bold yellow] ").strip()
+
+                # Handle commands
                 if user_input.lower() in ['exit', 'quit']:
                     self.chat_history.clear()
                     break
+                elif user_input == "/save":
+                    self._save_chat_session()
+                    continue
+                elif user_input == "/load":
+                    self._load_chat_session()
+                    continue
 
+                # Process normal input
                 processed = self._process_input(user_input)
                 self.chat_history.add_user_message(user_input)
 
@@ -139,6 +212,7 @@ class AIDAAgent:
                 markdown_content = ""
                 final_output = ""
                 rprint("[bold green]AiDA:[/bold green]")
+
                 with Live(Markdown(markdown_content), auto_refresh=False, console=console) as live:
                     for chunk in self.agent_executor.stream({
                         "input": processed["input"],
@@ -151,11 +225,10 @@ class AIDAAgent:
                             markdown_content += chunk_content
                             live.update(Markdown(markdown_content), refresh=True)
 
-                        # Capture final output if available
                         if isinstance(chunk, dict) and "output" in chunk:
                             final_output = chunk["output"]
 
-                # Add final output to history if we didn't capture incremental updates
+                # Update chat history
                 if final_output and not full_response:
                     self.chat_history.add_ai_message(final_output)
                     rprint(f"[bold cyan]AiDA:[/bold cyan] {Markdown(final_output)}\n")
