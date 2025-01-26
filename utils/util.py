@@ -2,23 +2,35 @@ import os
 
 def sanitize_collection_name(name: str) -> str:
     """
-    ChromaDB collection name rules:
-    - Must be string
-    - Can only contain letters, numbers, underscores
-    - Must start with letter
-    - Length between 3-63 characters
+    Sanitizes a string to be used as a ChromaDB collection name.
+    Args:
+        name (str): Input string to sanitize
+    Returns:
+        str: Sanitized string following ChromaDB collection name rules:
+        - Contains only letters, numbers, underscores
+        - Starts with letter
+        - Length between 3-63 characters
+        - Ends with alphanumeric character
     """
-    # Remove all non-alphanumeric characters except underscores and hyphens
-    sanitized = ''.join(char if char.isalnum() or char in ['_', '-'] else '_' for char in name)
+    # Remove all non-alphanumeric characters except underscores
+    sanitized = ''.join(char if char.isalnum() or char == '_' else '_' for char in name)
+
     # Ensure starts with a letter
     if not sanitized[0].isalpha():
         sanitized = 'col_' + sanitized
-    # Truncate if too long
+
+    # Ensure ends with alphanumeric
+    if not sanitized[-1].isalnum():
+        sanitized = sanitized[:-1] + 'x'
+
+    # Truncate if too long, preserving alphanumeric ending
     if len(sanitized) > 63:
-        sanitized = sanitized[:63]
+        sanitized = sanitized[:62] + 'x'
+
     # Ensure minimum length
     if len(sanitized) < 3:
-        sanitized = sanitized + '_collection'
+        sanitized = sanitized + '_col'
+
     return sanitized
 
 def extract_filename(filepath: str) -> str:

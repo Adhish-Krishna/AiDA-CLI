@@ -21,7 +21,6 @@ from tools.RAG.RAG import RAG
 
 load_dotenv()
 groq_model_name = os.getenv('GROQ_MODEL_NAME')
-default_provider = os.getenv('DEFAULT_PROVIDER')
 console = Console()
 
 class DocumentQueryInput(BaseModel):
@@ -52,7 +51,7 @@ class AIDAAgent:
                 func=self._tavily_web_search,
                 name="WebSearch",
                 description="""Use for queries that require up-to-date or external data from the internet.
-                Input format: {{"query": "search text"}}""",
+                Input format: {{"query": "your question"}}""",
                 args_schema=WebSearchInput
             )
         ]
