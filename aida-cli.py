@@ -1,7 +1,5 @@
 import os
 import re
-import sqlite3
-from datetime import datetime
 from dotenv import load_dotenv
 from rich import print as rprint
 from rich.prompt import Prompt, IntPrompt
@@ -9,14 +7,14 @@ from rich.markdown import Markdown
 from rich.live import Live
 from rich.console import Console
 from langchain_groq import ChatGroq
-from langchain_ollama import ChatOllama
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import SystemMessage, AIMessageChunk, HumanMessage, AIMessage
 from langchain_core.tools import StructuredTool
 from langchain_community.chat_message_histories import SQLChatMessageHistory
 from pydantic import BaseModel, Field
-from typing import Dict, Optional, Tuple, Any, List
+from typing import Dict, Optional, Tuple, Any
+from langchain_community.retrievers import TavilySearchAPIRetriever
 
 # Import your existing RAG function
 from tools.RAG.RAG import RAG
@@ -30,6 +28,8 @@ class DocumentQueryInput(BaseModel):
     filepath: str = Field(..., description="Full path to the document file")
     query: str = Field(..., description="Specific question or task for the document")
 
+class WebSearchInput(BaseModel):
+    query: str = Field(..., description="The query to search on the web.")
 
 
 class AIDAAgent:
@@ -47,26 +47,37 @@ class AIDAAgent:
                 Requires both filepath and query. File must exist locally.
                 Input format: {{"filepath": "path/to/file", "query": "your question"}}""",
                 args_schema=DocumentQueryInput
+            ),
+            StructuredTool.from_function(
+                func=self._tavily_web_search,
+                name="WebSearch",
+                description="""Use for queries that require up-to-date or external data from the internet.
+                Input format: {{"query": "search text"}}""",
+                args_schema=WebSearchInput
             )
         ]
 
         self.prompt = ChatPromptTemplate.from_messages([
             SystemMessage(content="""You are AiDA - Artificial Intelligence Document Assistant. Follow these rules:
 
-1. Document Questions:
-- Use DocumentRetrieval ONLY when user provides BOTH:
-  a) Explicit file path (e.g., .pdf, .docx)
-  b) Specific document-related question
-- Never assume document paths - require explicit user input
+                1. Document Questions:
+                - Use DocumentRetrieval ONLY when user provides BOTH:
+                a) Explicit file path (e.g., .pdf, .docx)
+                b) Specific document-related question
+                - Never assume document paths - require explicit user input
 
-2. General Knowledge:
-- Use built-in knowledge for common questions
-- Acknowledge when unsure
+                2. General Knowledge:
+                - Use built-in knowledge for common questions
+                - Acknowledge when unsure
 
-3. Response Guidelines:
-- For documents: cite exact text excerpts
-- For general questions: keep answers concise
-- Always verify document existence before use"""),
+                3. Response Guidelines:
+                - For documents: cite exact text excerpts
+                - For general questions: keep answers concise
+                - Always verify document existence before use
+
+                4. Web Search:
+                - For queries needing external or up-to-date data, use the 'WebSearch' tool with a relevant query.
+            """),
             MessagesPlaceholder(variable_name="chat_history"),
             ("human", "{input}"),
             MessagesPlaceholder(variable_name="agent_scratchpad")
@@ -110,6 +121,14 @@ class AIDAAgent:
             return context if context else "No relevant content found in document"
         except Exception as e:
             return f"Document processing error: {str(e)}"
+
+    def _tavily_web_search(self, query: str) -> str:
+       retriever = TavilySearchAPIRetriever(k=10)
+       docs = retriever.invoke(query)
+       context = ""
+       for j, doc in enumerate(docs):
+          context += f"Document {j+1}\n{doc.page_content}\n"
+       return context
 
     def _process_input(self, user_input: str) -> Dict:
         doc_info = self._detect_document_query(user_input)
