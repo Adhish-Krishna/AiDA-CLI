@@ -8,5 +8,7 @@
 /bin
 /demo
 /chats
-/groq_models.txt
-/ollama_models.txt
+/test.ipynb
+/groq_models.md
+/tools/WebSearch/__pycache__
+/tools/WebsiteScraper/__pycache__

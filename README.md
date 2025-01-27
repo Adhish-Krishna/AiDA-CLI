@@ -11,14 +11,15 @@ AiDA-CLI is a powerful command-line interface tool that enables users to interac
 
 ## Available Features
 
-- **Multi-format Support**: Process and analyze PDF, PPTX, DOCX, TXT, and Markdown files
+- **Multi-format Support**: Process and analyze PDF, PPTX, DOCX, and Markdown files
 - **Intelligent Querying**: Ask questions about your documents and get relevant answers
 - **RAG Implementation**: Utilizes Retrieval Augmented Generation for accurate responses
-- **Groq Integration**: Powered by Groq's LLM capabilities
+- **Groq Integration**: Powered by Groq's LLM capabilities (**Supported models**: llama-3.2-11b-vision-preview, llama-3.3-70b-versatile, llama-3.3-70b-specdec, llama-3.2-90b-vision-preview, mixtral-8x7b-32768)
+- **Web Search Integration**: Search the web to supplement document-based answers
+- **Web Scraping**: Give a Web URL and then chat with its content
 
 ## Upcoming Features
-
-- **Web Search Integration**: Search the web to supplement document-based answers
+- **Extended Document Support**: Support for xlxs, txt and image documents for document chat.
 - **Code Execution**: Generate and run Python code for data visualization and analysis
 - **Content Generation**: Create and save learning materials based on document content
 
@@ -46,10 +47,12 @@ pip install -r requirements.txt
 
 4. Set up environment variables:
 - Copy `.env.example` to `.env`
-- Add your Groq API key to the `.env` file:
+- Add your Groq API key to the `.env` file
+- Add your Tavily API Key for Web Search
 ```
-GROQ_API_KEY = your_api_key_here
-MODEL_NAME = <tool calling supported models from groq (for now llama 3.3 70 verstaile only supports with AiDA)>
+GROQ_API_KEY =<your groq api key>
+GROQ_MODEL_NAME = llama-3.3-70b-versatile (model can be changed. But not all groq models are suppoted. See supported models for details)
+TAVILY_API_KEY = <your tavily api key>
 ```
 
 ## Usage
