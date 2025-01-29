@@ -9,22 +9,25 @@
 
 AiDA-CLI is a powerful command-line interface tool that enables users to interact with and query documents intelligently. It serves as an AI-powered document assistant capable of handling various document formats including PDF, PPTX, DOCX, TXT, and Markdown files.
 
-## Available Features
+## AiDA Agent V 0.1
+  ### Overview
+  - The **AiDA Agent V 0.1** is a simple tool-calling agent. It is preferred for simple questions. It can retireve context from uploaded documents, can do web-search if it is not sure about the infromation and even scrap web pages if link is provided.
+  ### Available Features
+  - **Multi-format Support**: Process and analyze PDF, PPTX, DOCX, and Markdown files
+  - **Intelligent Querying**: Ask questions about your documents and get relevant answers
+  - **RAG Implementation**: Utilizes Retrieval Augmented Generation for accurate responses
+  - **Groq Integration**: Powered by Groq's LLM capabilities (**Supported models**: llama-3.2-11b-vision-preview, llama-3.3-70b-versatile, llama-3.3-70b-specdec, llama-3.2-90b-vision-preview, mixtral-8x7b-32768)
+  - **Web Search Integration**: Search the web to supplement document-based answers
+  - **Web Scraping**: Give a Web URL and then chat with its content
 
-- **Multi-format Support**: Process and analyze PDF, PPTX, DOCX, and Markdown files
-- **Intelligent Querying**: Ask questions about your documents and get relevant answers
-- **RAG Implementation**: Utilizes Retrieval Augmented Generation for accurate responses
-- **Groq Integration**: Powered by Groq's LLM capabilities (**Supported models**: llama-3.2-11b-vision-preview, llama-3.3-70b-versatile, llama-3.3-70b-specdec, llama-3.2-90b-vision-preview, mixtral-8x7b-32768)
-- **Web Search Integration**: Search the web to supplement document-based answers
-- **Web Scraping**: Give a Web URL and then chat with its content
+  ### Upcoming Features
+  - **Extended Document Support**: Support for xlxs, txt and image documents for document chat.
 
-## Upcoming Features
-- **Extended Document Support**: Support for xlxs, txt and image documents for document chat.
-- **Code Execution**: Generate and run Python code for data visualization and analysis
-- **Content Generation**: Create and save learning materials based on document content
+  ### Demo
+  [Watch Demo](https://drive.google.com/file/d/187NGwRyUe1kw6DRC3sTpC4rvIFU9IKYr/view?usp=sharing)
 
-## Demo
-[Watch Demo](https://drive.google.com/file/d/187NGwRyUe1kw6DRC3sTpC4rvIFU9IKYr/view?usp=sharing)
+## AiDA Agent V 0.2
+  - Coming Soon
 
 ## Installation
 
@@ -57,9 +60,9 @@ TAVILY_API_KEY = <your tavily api key>
 
 ## Usage
 
-Run AiDA-CLI using:
+Run AiDA Agent V 0.1 using:
 ```bash
-python aida-cli.py
+python aida-agent-v-0.1.py
 ```
 
 ## Configuration
