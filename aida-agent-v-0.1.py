@@ -89,7 +89,7 @@ class AIDAAgent:
                 - For documents: cite exact text excerpts
                 - For general questions: keep answers concise
                 - Always verify document existence before use
-                          
+
                 4. Web Search:
                 - For queries needing external or up-to-date data, use the 'WebSearch' tool with a relevant query.
             """),
@@ -213,7 +213,7 @@ class AIDAAgent:
         rprint(f"[green]Loaded chat from {selected_file}[/green]")
 
     def chat(self):
-        rprint("[bold green]AiDA - CLI : AI Document Assistant[/bold green]")
+        rprint("[bold green]AiDA - CLI : AI Document Assistant V 0.1[/bold green]")
         rprint("[italic]Type 'exit' to end conversation, '/save' to save, '/load' to load[/italic]\n")
 
         while True:

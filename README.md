@@ -24,7 +24,7 @@ AiDA-CLI is a powerful command-line interface tool that enables users to interac
   - **Extended Document Support**: Support for xlxs, txt and image documents for document chat.
 
   ### Demo
-  [Watch Demo](https://drive.google.com/file/d/187NGwRyUe1kw6DRC3sTpC4rvIFU9IKYr/view?usp=sharing)
+  [AiDA Agent V 0.1](https://drive.google.com/file/d/1g9o8G1SVEvMtIKhjdWpr5IR5ueAh1weO/view?usp=sharing)
 
 ## AiDA Agent V 0.2
   - Coming Soon
