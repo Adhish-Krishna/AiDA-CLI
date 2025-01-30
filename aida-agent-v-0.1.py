@@ -1,3 +1,18 @@
+'''
+    AiDA Agent V 0.1
+
+        Overview
+            The AiDA Agent V 0.1 is a simple tool-calling agent. It is preferred for simple questions. It can retireve context from uploaded documents, can do web-search if it is not sure about the infromation and even scrap web pages if link is provided.
+
+        Available Features
+            - Multi-format Support: Process and analyze PDF, PPTX, DOCX, and Markdown files
+            - Intelligent Querying: Ask questions about your documents and get relevant answers
+            - RAG Implementation: Utilizes Retrieval Augmented Generation for accurate responses
+            - Groq Integration: Powered by Groq's LLM capabilities (**Supported models**: llama-3.  2-11b-vision-preview, llama-3.3-70b-versatile, llama-3.3-70b-specdec, llama-3.2-90b-vision-preview, mixtral-8x7b-32768)
+            - Web Search Integration**: Search the web to supplement document-based answers
+            - Web Scraping: Give a Web URL and then chat with its content
+'''
+
 import os
 import re
 from dotenv import load_dotenv
