@@ -30,6 +30,8 @@ from langchain_community.chat_message_histories import SQLChatMessageHistory
 from pydantic import BaseModel, Field
 from typing import Dict, Optional, Tuple, Any
 
+from langchain_ollama import ChatOllama
+
 
 # Importing RAG Tool
 from tools.RAG.RAG import RAG
@@ -42,7 +44,11 @@ from tools.WebsiteScraper.website_scraper import scrapWebsite
 
 load_dotenv()
 groq_model_name = os.getenv('GROQ_MODEL_NAME')
+ollama_model_name = os.getenv('OLLAMA_MODEL_NAME')
+default_provider = os.getenv('DEFAULT_PROVIDER')
 console = Console()
+
+model = ChatOllama(model=ollama_model_name) if default_provider=='ollama' else ChatGroq(model=groq_model_name)
 
 class DocumentQueryInput(BaseModel):
     filepath: str = Field(..., description="Full path to the document file")
@@ -58,10 +64,7 @@ class ScrapWebsite(BaseModel):
 
 class AIDAAgent:
     def __init__(self):
-        self.llm = ChatGroq(
-            model=groq_model_name,
-            temperature=0.3
-        )
+        self.llm = model
         #Add Tools here
         self.tools = [
             StructuredTool.from_function(
@@ -145,6 +148,9 @@ class AIDAAgent:
 
     def _rag_wrapper(self, filepath: str, query: str) -> str:
         try:
+            filepath = filepath.strip()
+            if filepath[0] == "\\":
+                filepath = filepath[1:]
             if not os.path.exists(filepath):
                 return f"Error: File {filepath} not found"
             context = RAG(filepath, query)
@@ -229,6 +235,7 @@ class AIDAAgent:
 
     def chat(self):
         rprint("[bold green]AiDA - CLI : AI Document Assistant V 0.1[/bold green]")
+        rprint(f"[blue]LLM Provider: {default_provider} \nModel: {ollama_model_name if default_provider == 'ollama' else groq_model_name}[blue]")
         rprint("[italic]Type 'exit' to end conversation, '/save' to save, '/load' to load[/italic]\n")
 
         while True:
