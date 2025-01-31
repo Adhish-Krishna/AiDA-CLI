@@ -9,6 +9,7 @@
             - Intelligent Querying: Ask questions about your documents and get relevant answers
             - RAG Implementation: Utilizes Retrieval Augmented Generation for accurate responses
             - Groq Integration: Powered by Groq's LLM capabilities (**Supported models**: llama-3.  2-11b-vision-preview, llama-3.3-70b-versatile, llama-3.3-70b-specdec, llama-3.2-90b-vision-preview, mixtral-8x7b-32768)
+            - Ollama Support for local models: Supports local models (only function calling LLMS supported. Eg qwen2.5:3b) via Ollama
             - Web Search Integration**: Search the web to supplement document-based answers
             - Web Scraping: Give a Web URL and then chat with its content
 '''
