@@ -8,7 +8,10 @@
 /bin
 /demo
 /chats
-/test.ipynb
 /groq_models.md
 /tools/WebSearch/__pycache__
 /tools/WebsiteScraper/__pycache__
+/notebooks
+/test.py
+/test_chat_history.db
+/multiagent.py

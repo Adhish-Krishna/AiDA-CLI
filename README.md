@@ -47,11 +47,13 @@ pip install -r requirements.txt
 
 4. Set up environment variables:
 - Copy `.env.example` to `.env`
-- Add your Groq API key to the `.env` file
+- Add your Groq API key for llm usage
 - Add your Tavily API Key for Web Search
 ```
 GROQ_API_KEY =<your groq api key>
-GROQ_MODEL_NAME = llama-3.3-70b-versatile (model can be changed. But not all groq models are suppoted. See supported models for details)
+GROQ_MODEL_NAME = llama-3.3-70b-versatile (cange this as your wish. But note only function calling llms supported)
+OLLAMA_MODEL_NAME = qwen2.5:3b (cange this as your wish. But note only function calling llms supported)
+DEFAULT_PROVIDER = groq
 TAVILY_API_KEY = <your tavily api key>
 ```
 
@@ -66,6 +68,8 @@ python aida-agent-v-0.1.py
 
 The system uses the following key components:
 - Groq LLM (llama-3.3-70b-versatile model by default. Model can be changed)
+- Ollama (for local llm usage)
+- Tavily for Web Search and Website Scraping
 - HuggingFace Embeddings
 - ChromaDB for vector storage
 - Rich for console output formatting
