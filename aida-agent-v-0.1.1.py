@@ -17,17 +17,6 @@ from rich.markdown import Markdown
 from rich.prompt import Prompt
 import os
 
-load_dotenv()
-groq_model_name = os.getenv('GROQ_MODEL_NAME')
-ollama_model_name = os.getenv('OLLAMA_MODEL_NAME')
-default_provider = os.getenv('DEFAULT_PROVIDER')
-console = Console()
-tools = [DocumentRetrieverTool, WebScraperTool, WebSearchTool]
-chat_history = SQLChatMessageHistory(
-  session_id="aida_chat_session",
-  connection="sqlite:///aida_v0.1.1_chat_history.db"
-)
-
 class AgentState(TypedDict):
   messages: Annotated[list[AnyMessage],operator.add]
 
@@ -77,50 +66,65 @@ class Agent:
     else:
       return False
 
+def chat():
 
-prompt = """You are AiDA, an AI Document Assistant.\
-When answering document-related questions, only use the DocumentRetrieval tool if the user explicitly provides a valid filepath (e.g., ending with .pdf, .docx, .pptx, .txt, or .md) along with a specific question about the document content. Never assume a file path if it is not provided.\
-Example: User: "C:\\Users\\strea\\Downloads\\MathsPaper.pdf" sumarize this doc
-Then the filepath = "C:\\Users\\strea\\Downloads\\MathsPaper.pdf" and the query = sumarize this doc
-You have WebSearch Tool to search the web with provided query. \
-You have WebsiteScraper tool to scrap the website with provided Web URL and the query. \
-You are allowed to make multiple calls (either together or in sequence). \
-Only look up information when you are sure of what you want. \
-If you need to look up some information before asking a follow up question, you are allowed to do that!
-"""
+  load_dotenv()
+  groq_model_name = os.getenv('GROQ_MODEL_NAME')
+  ollama_model_name = os.getenv('OLLAMA_MODEL_NAME')
+  default_provider = os.getenv('DEFAULT_PROVIDER')
+  console = Console()
+  tools = [DocumentRetrieverTool, WebScraperTool, WebSearchTool]
+  chat_history = SQLChatMessageHistory(
+    session_id="aida_chat_session",
+    connection="sqlite:///aida_v0.1.1_chat_history.db"
+  )
 
-agent = Agent(provider=default_provider, model_name=(ollama_model_name if default_provider == 'ollama' else groq_model_name), system_prompt=prompt, tools = tools)
-config = {"configurable":{"thread_id":"1"}}
-chat_history.add_message(SystemMessage(content=prompt))
-isChatLoaded = False
-rprint("[bold green]AiDA - CLI : AI Document Assistant V 0.1[/bold green]")
-rprint(f"[blue]LLM Provider: {default_provider} \nModel: {ollama_model_name if default_provider == 'ollama' else groq_model_name}[blue]")
-rprint("[italic]Type 'exit' to end conversation, '/save' to save, '/load' to load[/italic]\n")
+  prompt = """You are AiDA, an AI Document Assistant.\
+  When answering document-related questions, only use the DocumentRetrieval tool if the user explicitly provides a valid filepath (e.g., ending with .pdf, .docx, .pptx, .txt, or .md) along with a specific question about the document content. Never assume a file path if it is not provided.\
+  Example: User: "C:\\Users\\strea\\Downloads\\MathsPaper.pdf" sumarize this doc
+  Then the filepath = "C:\\Users\\strea\\Downloads\\MathsPaper.pdf" and the query = sumarize this doc
+  You have WebSearch Tool to search the web with provided query. \
+  You have WebsiteScraper tool to scrap the website with provided Web URL and the query. \
+  You are allowed to make multiple calls (either together or in sequence). \
+  Only look up information when you are sure of what you want. \
+  If you need to look up some information before asking a follow up question, you are allowed to do that!
+  """
 
-while True:
-  user = Prompt.ask("[bold yellow]User[/bold yellow] ").strip()
+  agent = Agent(provider=default_provider, model_name=(ollama_model_name if default_provider == 'ollama' else groq_model_name), system_prompt=prompt, tools = tools)
+  config = {"configurable":{"thread_id":"1"}}
+  chat_history.add_message(SystemMessage(content=prompt))
+  isChatLoaded = False
+  rprint("[bold green]AiDA - CLI : AI Document Assistant V 0.1.1[/bold green]")
+  rprint(f"[blue]LLM Provider: {default_provider} \nModel: {ollama_model_name if default_provider == 'ollama' else groq_model_name}[blue]")
+  rprint("[italic]Type 'exit' to end conversation, '/save' to save, '/load' to load[/italic]\n")
 
-  if user == "exit":
-    chat_history.clear()
-    break
+  while True:
+    user = Prompt.ask("[bold yellow]User[/bold yellow] ").strip()
 
-  elif user == "/save":
-    _save_chat_session(chat_history=chat_history)
+    if user == "exit":
+      chat_history.clear()
+      break
 
-  elif user == "/load":
-    _load_chat_session(chat_history=chat_history)
-    messages = chat_history.get_messages()
-    isChatLoaded = True
+    elif user == "/save":
+      _save_chat_session(chat_history=chat_history)
 
-  else:
-    if isChatLoaded:
-      messages = messages + [HumanMessage(content=user)]
-      isChatLoaded = False
+    elif user == "/load":
+      _load_chat_session(chat_history=chat_history)
+      messages = chat_history.get_messages()
+      isChatLoaded = True
+
     else:
-      messages = [HumanMessage(content=user)]
+      if isChatLoaded:
+        messages = messages + [HumanMessage(content=user)]
+        isChatLoaded = False
+      else:
+        messages = [HumanMessage(content=user)]
 
-    chat_history.add_user_message(user)
-    response = agent.graph.invoke({"messages":messages},config=config)
-    rprint("[bold green]AiDA:[/bold green]")
-    chat_history.add_ai_message(response["messages"][-1].content)
-    console.print(Markdown(response["messages"][-1].content))
+      chat_history.add_user_message(user)
+      response = agent.graph.invoke({"messages":messages},config=config)
+      rprint("[bold green]AiDA:[/bold green]")
+      chat_history.add_ai_message(response["messages"][-1].content)
+      console.print(Markdown(response["messages"][-1].content))
+
+if __name__ == "__main__":
+  chat()
