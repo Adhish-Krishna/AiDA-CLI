@@ -1,3 +1,19 @@
+'''
+    AiDA Agent V 0.1.1
+
+        Overview
+            The AiDA Agent V 0.1.1 is an updated version of the AiDA Agent V 0.1. Now the AiDA Agent V 0.1.1 uses langgraph. It is also a tool calling agent but it can call multiple tools sequentially or parallely based on the query. It can retireve context from uploaded documents, can do web-search if it is not sure about the infromation and even scrap web pages if link is provided.
+
+        Available Features
+            - Multi-format Support: Process and analyze PDF, PPTX, DOCX, and Markdown files
+            - Intelligent Querying: Ask questions about your documents and get relevant answers
+            - RAG Implementation: Utilizes Retrieval Augmented Generation for accurate responses
+            - Groq Integration: Powered by Groq's LLM capabilities (**Supported models**: llama-3.  2-11b-vision-preview, llama-3.3-70b-versatile, llama-3.3-70b-specdec, llama-3.2-90b-vision-preview, mixtral-8x7b-32768)
+            - Ollama Support for local models: Supports local models (only function calling LLMS supported. Eg qwen2.5:3b, qwen2.5:latest) via Ollama
+            - Web Search Integration: Search the web to supplement document-based answers
+            - Web Scraping: Give a Web URL and then chat with its content
+'''
+
 from langchain_ollama import ChatOllama
 from langchain_groq import ChatGroq
 from langgraph.graph import StateGraph, START, END
@@ -8,9 +24,10 @@ from dotenv import load_dotenv
 from tools.RAG.RAG import DocumentRetrieverTool
 from tools.WebSearch.websearchtool import WebSearchTool
 from tools.WebsiteScraper.website_scraper import WebScraperTool
+from tools.ContentSaver.contentSaverTool import SaveContentTool
 import operator
 from langchain_community.chat_message_histories import SQLChatMessageHistory
-from utils.chat_util import _save_chat_session, _load_chat_session
+from utils.chat_util import _save_chat_session, _load_chat_session, _detect_document_query
 from rich import print as rprint
 from rich.console import Console
 from rich.markdown import Markdown
@@ -73,7 +90,7 @@ def chat():
   ollama_model_name = os.getenv('OLLAMA_MODEL_NAME')
   default_provider = os.getenv('DEFAULT_PROVIDER')
   console = Console()
-  tools = [DocumentRetrieverTool, WebScraperTool, WebSearchTool]
+  tools = [DocumentRetrieverTool, WebScraperTool, WebSearchTool, SaveContentTool]
   chat_history = SQLChatMessageHistory(
     session_id="aida_chat_session",
     connection="sqlite:///aida_v0.1.1_chat_history.db"
@@ -85,6 +102,7 @@ def chat():
   Then the filepath = "C:\\Users\\strea\\Downloads\\MathsPaper.pdf" and the query = sumarize this doc
   You have WebSearch Tool to search the web with provided query. \
   You have WebsiteScraper tool to scrap the website with provided Web URL and the query. \
+  You have SaveContent tool to save the generated content in the file system in markdown format. \
   You are allowed to make multiple calls (either together or in sequence). \
   Only look up information when you are sure of what you want. \
   If you need to look up some information before asking a follow up question, you are allowed to do that!
@@ -100,6 +118,13 @@ def chat():
 
   while True:
     user = Prompt.ask("[bold yellow]User[/bold yellow] ").strip()
+
+    doc_info = _detect_document_query(user)
+
+    if doc_info:
+      filepath, query = doc_info
+      document_query_prompt = f"Use the below filepath (use as such don't change anyting in the filepath) and query to call the DocumentRetriever Tool: filepath: {filepath} , query: {query}"
+      user = document_query_prompt
 
     if user == "exit":
       chat_history.clear()
