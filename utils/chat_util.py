@@ -68,12 +68,12 @@ def _load_chat_session(chat_history : SQLChatMessageHistory):
   for idx, file in enumerate(chat_files, 1):
     rprint(f"{idx}. {file}")
 
-    try:
-      selection = IntPrompt.ask("Enter chat number to load", default=1, show_default=False)
-      selected_file = chat_files[selection - 1]
-    except (ValueError, IndexError):
-      rprint("[red]Invalid selection[/red]")
-      return
+  try:
+    selection = IntPrompt.ask("Enter chat number to load", default=1, show_default=False)
+    selected_file = chat_files[selection - 1]
+  except (ValueError, IndexError):
+    rprint("[red]Invalid selection[/red]")
+    return
 
   # Load selected chat
   filepath = os.path.join("chats", selected_file)
