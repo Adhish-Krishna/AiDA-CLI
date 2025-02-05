@@ -14,6 +14,13 @@
             - Web Scraping: Give a Web URL and then chat with its content
 '''
 
+'''
+Features need to add:
+  - To support token streaming
+  - To use Graph RAG Technique for advanced document retrieval
+  - To support multi-modal inputs (like image inputs)
+'''
+
 import os
 import re
 from dotenv import load_dotenv
@@ -29,6 +36,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import SystemMessage
 from langchain_community.chat_message_histories import SQLChatMessageHistory
 from utils.chat_util import _process_input, _process_stream_chunk, _save_chat_session, _load_chat_session
+from prompts.prompt import aida_v01_prompt
 
 # Importing RAG Tool
 from tools.RAG.RAG import DocumentRetrieverTool
@@ -58,25 +66,7 @@ class AIDAAgent:
         ]
 
         self.prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content="""You are AiDA - Artificial Intelligence Document Assistant. Follow these rules:
-                1. Document Questions:
-                - Use DocumentRetrieval ONLY when user provides BOTH:
-                a) Explicit file path (e.g., .pdf, .docx)
-                b) Specific document-related question
-                - Never assume document paths - require explicit user input
-
-                2. General Knowledge:
-                - Use built-in knowledge for common questions
-                - Acknowledge when unsure
-
-                3. Response Guidelines:
-                - For documents: cite exact text excerpts
-                - For general questions: keep answers concise
-                - Always verify document existence before use
-
-                4. Web Search:
-                - For queries needing external or up-to-date data, use the 'WebSearch' tool with a relevant query.
-            """),
+            SystemMessage(content=aida_v01_prompt),
                 MessagesPlaceholder(variable_name="chat_history"),
                 ("human", "{input}"),
                 MessagesPlaceholder(variable_name="agent_scratchpad")

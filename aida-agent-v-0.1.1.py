@@ -14,6 +14,14 @@
             - Web Scraping: Give a Web URL and then chat with its content
 '''
 
+'''
+Features need to add:
+  - To support token streaming
+  - To use Graph RAG Technique for advanced document retrieval
+  - To support multi-modal inputs (like image inputs)
+  - To enhance chat history for the modal
+'''
+
 from langchain_ollama import ChatOllama
 from langchain_groq import ChatGroq
 from langgraph.graph import StateGraph, START, END
@@ -33,6 +41,7 @@ from rich.console import Console
 from rich.markdown import Markdown
 from rich.prompt import Prompt
 import os
+from prompts.prompt import aida_v011_prompt
 
 class AgentState(TypedDict):
   messages: Annotated[list[AnyMessage],operator.add]
@@ -68,12 +77,12 @@ class Agent:
           filepath = args["filepath"]
           filepath = str(filepath.strip())
           t["args"]["filepath"] = filepath
+        rprint(f"[blue]Using Tool: {t["name"]}[blue]")
         result = self.tools[t["name"]].invoke(t["args"])
         results.append(ToolMessage(content=str(result), tool_name=t["name"], tool_call_id = t["id"]))
-        print(f"Calling {t}")
       else:
-        print("Requested Tool is not available")
-    print("Back to the model")
+        rprint("[red]Requested Tool is not available[red]")
+    rprint("[blue]Analysing...[blue]")
     return {"messages":results}
 
   def conditional_edge(self, state: AgentState):
@@ -96,17 +105,7 @@ def chat():
     connection="sqlite:///aida_v0.1.1_chat_history.db"
   )
 
-  prompt = """You are AiDA, an AI Document Assistant.\
-  When answering document-related questions, only use the DocumentRetrieval tool if the user explicitly provides a valid filepath (e.g., ending with .pdf, .docx, .pptx, .txt, or .md) along with a specific question about the document content. Never assume a file path if it is not provided.\
-  Example: User: "C:\\Users\\strea\\Downloads\\MathsPaper.pdf" sumarize this doc
-  Then the filepath = "C:\\Users\\strea\\Downloads\\MathsPaper.pdf" and the query = sumarize this doc
-  You have WebSearch Tool to search the web with provided query. \
-  You have WebsiteScraper tool to scrap the website with provided Web URL and the query. \
-  You have SaveContent tool to save the generated content in the file system in markdown format. \
-  You are allowed to make multiple calls (either together or in sequence). \
-  Only look up information when you are sure of what you want. \
-  If you need to look up some information before asking a follow up question, you are allowed to do that!
-  """
+  prompt = aida_v011_prompt
 
   agent = Agent(provider=default_provider, model_name=(ollama_model_name if default_provider == 'ollama' else groq_model_name), system_prompt=prompt, tools = tools)
   config = {"configurable":{"thread_id":"1"}}

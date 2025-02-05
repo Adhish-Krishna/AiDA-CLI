@@ -1,5 +1,5 @@
-from tools.RAG.RAG import RAG_Tool
+from tools.RAG.RAG import RAG
 
-context = RAG_Tool(r"{}".format(input("Enter the file path: ")),input("Enter your Query: "))
+context = RAG(r"{}".format(input("Enter the file path: ")),input("Enter your Query: "))
 
 print(context)
