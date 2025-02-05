@@ -26,8 +26,8 @@ AiDA-CLI is a powerful command-line interface tool that enables users to interac
 ## AiDA Agent V 0.1.1
 
   ### Agent Graph
-  
-  <img src="./design/AiDA-Agent-v0.1.1 Graph.png">
+
+  <img src="./Design/AiDA-Agent-v0.1.1 Graph.png">
 
   ### Overview
   - The AiDA Agent V 0.1.1 is an updated version of the AiDA Agent V 0.1. Now the AiDA Agent V 0.1.1 uses langgraph. It is also a tool calling agent but it can call multiple tools sequentially or parallely based on the query. It can retireve context from uploaded documents, can do web-search if it is not sure about the infromation and even scrap web pages if link is provided.
