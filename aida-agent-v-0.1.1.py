@@ -12,6 +12,7 @@
             - Ollama Support for local models: Supports local models (only function calling LLMS supported. Eg qwen2.5:3b, qwen2.5:latest) via Ollama
             - Web Search Integration: Search the web to supplement document-based answers
             - Web Scraping: Give a Web URL and then chat with its content
+            - Save Content: Saves the generated content to the file system
 '''
 
 '''

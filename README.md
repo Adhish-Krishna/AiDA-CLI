@@ -23,6 +23,31 @@ AiDA-CLI is a powerful command-line interface tool that enables users to interac
   ### Demo
   [AiDA Agent V 0.1](https://drive.google.com/file/d/1g9o8G1SVEvMtIKhjdWpr5IR5ueAh1weO/view?usp=sharing)
 
+## AiDA Agent V 0.1.1
+
+  ### Agent Graph
+  
+  <img src="./design/AiDA-Agent-v0.1.1 Graph.png">
+
+  ### Overview
+  - The AiDA Agent V 0.1.1 is an updated version of the AiDA Agent V 0.1. Now the AiDA Agent V 0.1.1 uses langgraph. It is also a tool calling agent but it can call multiple tools sequentially or parallely based on the query. It can retireve context from uploaded documents, can do web-search if it is not sure about the infromation and even scrap web pages if link is provided.
+
+  ### Available Features
+  - **Multi-format Support:** Process and analyze PDF, PPTX, DOCX, and Markdown files
+  - **Intelligent Querying:** Ask questions about your documents and get relevant answers
+  - **RAG Implementation:** Utilizes Retrieval Augmented Generation for accurate responses
+  - **Groq Integration:** Powered by Groq's LLM capabilities (**Supported models**: llama-3.  2-11b-vision-preview, llama-3.3-70b-versatile, llama-3.3-70b-specdec, llama-3.2-90b-vision-preview, mixtral-8x7b-32768)
+  - **Ollama Support for local models**: Supports local models (only function calling LLMS supported. Eg qwen2.5:3b, qwen2.5:latest) via Ollama
+  - **Web Search Integration**: Search the web to supplement document-based answers
+  - **Web Scraping**: Give a Web URL and then chat with its content
+  - **Save Content** : Saves the generated content to the file system
+
+  ### Upcoming Features
+  - To support token streaming
+  - To use Graph RAG Technique for advanced document retrieval
+  - To support multi-modal inputs (like image inputs)
+  - To enhance chat history for the modal
+
 ## AiDA Agent V 0.2
   - Coming Soon
 
