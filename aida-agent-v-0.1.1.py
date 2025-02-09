@@ -25,15 +25,13 @@ Features need to add:
 
 from langchain_ollama import ChatOllama
 from langchain_groq import ChatGroq
+from langchain_google_genai import GoogleGenerativeAI
 from langgraph.graph import StateGraph, START, END
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import AnyMessage, HumanMessage, SystemMessage, ToolMessage
 from typing import Annotated, TypedDict
 from dotenv import load_dotenv
-from tools.RAG.RAG import DocumentRetrieverTool
-from tools.WebSearch.websearchtool import WebSearchTool
-from tools.WebsiteScraper.website_scraper import WebScraperTool
-from tools.ContentSaver.contentSaverTool import SaveContentTool
+from tools import DocumentRetrieverTool, WebSearchTool, WebScraperTool, SaveContentTool
 import operator
 from langchain_community.chat_message_histories import SQLChatMessageHistory
 from utils.chat_util import _save_chat_session, _load_chat_session, _detect_document_query
@@ -52,7 +50,7 @@ class Agent:
     self.checkpointer = MemorySaver()
     self.system = system_prompt
     self.tools = {t.name: t for t in tools}
-    self.llm = (ChatOllama(model=model_name) if provider == 'ollama' else ChatGroq(model=model_name)).bind_tools(tools)
+    self.llm = self.get_llm(provider=provider, model_name=model_name).bind_tools(tools)
     graph = StateGraph(AgentState)
     graph.add_node("llm", self.llm_node)
     graph.add_node("tools", self.tool_node)
@@ -60,6 +58,12 @@ class Agent:
     graph.add_edge("tools", "llm")
     graph.set_entry_point("llm")
     self.graph = graph.compile(checkpointer=self.checkpointer)
+
+  def get_llm(self, provider: str, model_name: str):
+    if provider == 'ollama':
+      return ChatOllama(model=model_name)
+    else:
+      return ChatGroq(model=model_name)
 
   def llm_node(self, state: AgentState):
     messages = state["messages"]
@@ -93,6 +97,13 @@ class Agent:
     else:
       return False
 
+def get_model_name(provider: str, groq: str, ollama: str)->str:
+  if provider == 'ollama':
+    return ollama
+  else:
+    return groq
+
+
 def chat():
 
   load_dotenv()
@@ -108,12 +119,12 @@ def chat():
 
   prompt = aida_v011_prompt
 
-  agent = Agent(provider=default_provider, model_name=(ollama_model_name if default_provider == 'ollama' else groq_model_name), system_prompt=prompt, tools = tools)
+  agent = Agent(provider=default_provider, model_name=get_model_name(default_provider, groq_model_name, ollama_model_name), system_prompt=prompt, tools = tools)
   config = {"configurable":{"thread_id":"1"}}
   chat_history.add_message(SystemMessage(content=prompt))
   isChatLoaded = False
   rprint("[bold green]AiDA - CLI : AI Document Assistant V 0.1.1[/bold green]")
-  rprint(f"[blue]LLM Provider: {default_provider} \nModel: {ollama_model_name if default_provider == 'ollama' else groq_model_name}[blue]")
+  rprint(f"[blue]LLM Provider: {default_provider} \nModel: {get_model_name(default_provider, groq_model_name, ollama_model_name)}[blue]")
   rprint("[italic]Type 'exit' to end conversation, '/save' to save, '/load' to load[/italic]\n")
 
   while True:
