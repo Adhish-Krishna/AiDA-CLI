@@ -25,7 +25,7 @@ Features need to add:
 
 from langchain_ollama import ChatOllama
 from langchain_groq import ChatGroq
-from langchain_google_genai import GoogleGenerativeAI
+from langchain_openai import AzureChatOpenAI
 from langgraph.graph import StateGraph, START, END
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import AnyMessage, HumanMessage, SystemMessage, ToolMessage
@@ -62,6 +62,8 @@ class Agent:
   def get_llm(self, provider: str, model_name: str):
     if provider == 'ollama':
       return ChatOllama(model=model_name)
+    elif provider == 'azure':
+      return AzureChatOpenAI(model=model_name, api_version='2024-05-01-preview')
     else:
       return ChatGroq(model=model_name)
 
@@ -97,9 +99,11 @@ class Agent:
     else:
       return False
 
-def get_model_name(provider: str, groq: str, ollama: str)->str:
+def get_model_name(provider: str, groq: str, ollama: str, azure: str)->str:
   if provider == 'ollama':
     return ollama
+  elif provider == 'azure':
+    return azure
   else:
     return groq
 
@@ -109,6 +113,7 @@ def chat():
   load_dotenv()
   groq_model_name = os.getenv('GROQ_MODEL_NAME')
   ollama_model_name = os.getenv('OLLAMA_MODEL_NAME')
+  azure_model_name = os.getenv('AZURE_MODEL_NAME')
   default_provider = os.getenv('DEFAULT_PROVIDER')
   console = Console()
   tools = [DocumentRetrieverTool, WebScraperTool, WebSearchTool, SaveContentTool]
@@ -119,12 +124,12 @@ def chat():
 
   prompt = aida_v011_prompt
 
-  agent = Agent(provider=default_provider, model_name=get_model_name(default_provider, groq_model_name, ollama_model_name), system_prompt=prompt, tools = tools)
+  agent = Agent(provider=default_provider, model_name=get_model_name(default_provider, groq_model_name, ollama_model_name, azure_model_name), system_prompt=prompt, tools = tools)
   config = {"configurable":{"thread_id":"1"}}
   chat_history.add_message(SystemMessage(content=prompt))
   isChatLoaded = False
   rprint("[bold green]AiDA - CLI : AI Document Assistant V 0.1.1[/bold green]")
-  rprint(f"[blue]LLM Provider: {default_provider} \nModel: {get_model_name(default_provider, groq_model_name, ollama_model_name)}[blue]")
+  rprint(f"[blue]LLM Provider: {default_provider} \nModel: {get_model_name(default_provider, groq_model_name, ollama_model_name, azure_model_name)}[blue]")
   rprint("[italic]Type 'exit' to end conversation, '/save' to save, '/load' to load[/italic]\n")
 
   while True:
